@@ -1,11 +1,12 @@
 using Query
 using Test
-using QuerySQLite: SourceTables
-using SQLite: DB
+using QuerySQLite
+import SQLite
 using QueryTables
 
 filename = joinpath(@__DIR__, "Chinook_Sqlite.sqlite")
-database = SourceTables(DB(filename))
+database = Database(filename)
+database2 = Database(SQLite.DB(filename))
 
 @testset "QuerySQLite" begin
 
@@ -15,7 +16,7 @@ database = SourceTables(DB(filename))
     first |>
     propertynames == (:TrackId, :Name, :Composer, :UnitPrice)
 
-@test (database.Customer |>
+@test (database2.Customer |>
     @map({_.City, _.Country}) |>
     @orderby(_.Country) |>
     DataTable).Country[1] == "Argentina"
@@ -38,10 +39,17 @@ database = SourceTables(DB(filename))
     @drop(10) |>
     DataTable).Name)  == "C.O.D."
 
-@test first((database.Track |>
-    @map({_.TrackId, _.Name, _.Bytes}) |>
-    @orderby_descending(_.Bytes) |>
-    @thenby(_.Name) |>
-    DataTable).Bytes) == 1059546140
+@test first((
+    @from i in database.Track begin
+        @orderby descending(i.Bytes), i.Name
+        @select {i.TrackId, i.Name, i.Bytes}
+        @collect DataTable
+    end
+    ).Bytes) == 1059546140
+
+@test database.Artist |>
+    @join(database.Album, _.ArtistId, _.ArtistId, {_.ArtistId, __.AlbumId}) |>
+    DataTable |>
+    length == 347
 
 end

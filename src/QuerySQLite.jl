@@ -19,12 +19,14 @@ sqlite3_column_type, sqlite3_step, sqlitevalue, Stmt, tables
 using TableShowUtils: printdataresource, printHTMLtable, printtable
 import TableTraits: isiterabletable
 
+export Database
+
 include("utilities.jl")
 include("source.jl")
-include("translate.jl")
-include("realize.jl")
 include("iterate.jl")
+include("translate.jl")
 include("library.jl")
 include("QueryOperators.jl")
+include("realize.jl")
 
 end # module
